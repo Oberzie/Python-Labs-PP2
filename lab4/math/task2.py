@@ -1,0 +1,5 @@
+height = int(input("Height: "))
+Base1 = int(input("Base1: "))
+Base2 = int(input("Base2: "))
+Area = 0.5 * height * (Base1 + Base2)
+print(Area)
