@@ -1,7 +1,7 @@
 class Account:
  def __init__(self):
-    self.owner = input()
-    self.balance = int(input())
+    self.owner = input("Enter Account name: ")
+    self.balance = int(input("Initial balance: "))
  
  def deposit(self, amount):
       if amount > 0:
@@ -28,12 +28,10 @@ class Account:
 
 account = Account()
 print(account)
+dep = int(input("What sum do you want to deposit? "))
+account.deposit(dep)
+wit = int(input("How much do you want to withdraw? "))
+account.withdraw(wit)
 
-account.deposit(500)
-account.deposit(-200)  # Invalid deposit
-
-account.withdraw(300)
-account.withdraw(1500)  # Overdraw attempt
-account.withdraw(-100)  # Invalid withdrawal
 
 print(account)
