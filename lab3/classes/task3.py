@@ -5,5 +5,9 @@ class Shape:
     def Rectangle(self):
         print(self.length * self.width)  
 
+class Rectangle(Shape):
+    def __init__():
+        pass
+    
 area = Shape()
 area.Rectangle()
