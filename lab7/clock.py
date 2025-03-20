@@ -2,8 +2,10 @@ import pygame
 import os
 import time
 pygame.init()
-screen = pygame.display.set_mode((1000,800)) # создаю поверхность
-# загружаю пнгшки из папку в свою программу
+pygame.display.set_caption('Mickey Mouse Clocks')
+
+screen = pygame.display.set_mode((1000,800)) 
+
 image = pygame.image.load('lab7/mickeyclock1.png').convert_alpha()
 hand = pygame.image.load('lab7/hand1.png').convert_alpha()
 handmin = pygame.image.load('lab7/hand2.png').convert_alpha()

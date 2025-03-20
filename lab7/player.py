@@ -19,25 +19,24 @@ playsong(current_song)
 
 x = 0
 y = 0
-
-running = True 
-while running:
+done = False 
+while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            done = True
 
     screen.fill((0,0,0))
     screen.blit(image, (x,y))
 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_q]: # dlya pause
+    if keys[pygame.K_q]: 
         pygame.mixer.music.pause()
-    if keys[pygame.K_w]: #dlya resume
+    if keys[pygame.K_w]: 
         pygame.mixer.music.unpause()
-    if keys[pygame.K_e]: #dlya next
+    if keys[pygame.K_e]: 
         current_song = (current_song + 1)
         playsong(current_song)
-    if keys[pygame.K_r]: # dlya previous
+    if keys[pygame.K_r]: 
         current_song = (current_song -1)
         playsong(current_song)
 
