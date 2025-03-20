@@ -5,11 +5,11 @@ screen = pygame.display.set_mode((500,500))
 x,y = 250, 200
 radius = 25
 
-running = True 
-while running:
+done = True 
+while done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            done = False
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT] and x - radius > 0:
@@ -22,9 +22,8 @@ while running:
         y += 20
     screen.fill((255,255,255))
 
-    pygame.draw.circle(screen, (255, 0, 255), (x, y), radius)
+    pygame.draw.circle(screen, ('red'), (x, y), radius)
     pygame.display.flip()
     pygame.time.delay(10)
 pygame.quit()
 
-# Play, Stop, Next, Previous 
