@@ -1,5 +1,4 @@
 import pygame
-import os
 import time
 pygame.init()
 pygame.display.set_caption('Mickey Mouse Clocks')
@@ -28,7 +27,7 @@ while running:
         seconds = time.localtime().tm_sec
         mins = time.localtime().tm_min
         angle = -seconds * 6 # расчитываю градус для руки 
-        angle1 = -mins * 5
+        angle1 = -mins * 6
         #кручу руку по углу ( энгл) который ранее прописал
         rotated_hand = pygame.transform.rotate(hand, angle)
         rotated_handmin = pygame.transform.rotate(handmin, angle1)
