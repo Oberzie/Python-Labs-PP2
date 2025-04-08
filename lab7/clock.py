@@ -5,9 +5,9 @@ pygame.display.set_caption('Mickey Mouse Clocks')
 
 screen = pygame.display.set_mode((1000,800)) 
 
-image = pygame.image.load('lab7/mickeyclock1.png').convert_alpha()
-hand = pygame.image.load('lab7/hand1.png').convert_alpha()
-handmin = pygame.image.load('lab7/hand2.png').convert_alpha()
+image = pygame.image.load('lab7/mickeyclock1.png').convert()
+hand = pygame.image.load('lab7/hand1.png').convert()
+handmin = pygame.image.load('lab7/hand2.png').convert()
 x = (1000 - image.get_width()) // 2 
 y = (800 - image.get_height()) // 2
 # находим центр часов upd. его сдвинул немного, чтобы начало стрелки совпадало с центром часов
