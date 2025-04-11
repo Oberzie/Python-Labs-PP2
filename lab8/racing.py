@@ -1,36 +1,23 @@
 import pygame, sys  
-from pygame.locals import * 
 import random, time  
 
-
 pygame.init()
-
-FPS = 60
-FramePerSec = pygame.time.Clock()
-
-BLUE  = (0, 0, 255)
-RED   = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-
+FPS = pygame.time.Clock()
 
 SCREEN_WIDTH = 400  
 SCREEN_HEIGHT = 600 
-SPEED = 5  
+SPEED = 4  
 SCORE = 0  
 COINS_COLLECTED = 0  
 
 font = pygame.font.SysFont("Verdana", 60)  
 font_small = pygame.font.SysFont("Verdana", 20)  
-game_over = font.render("Game Over", True, BLACK)  
-
+game_over = font.render("Game Over", True, (0, 0, 0))  
 
 background = pygame.image.load("lab8/AnimatedStreet.png")
 
-
-DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-DISPLAYSURF.fill(WHITE)  
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+screen.fill((0, 0, 0))  
 pygame.display.set_caption("Game") 
 
 
@@ -59,9 +46,9 @@ class Player(pygame.sprite.Sprite):
 
     def move(self):
         pressed_keys = pygame.key.get_pressed() 
-        if self.rect.left > 0 and pressed_keys[K_LEFT]:  
+        if self.rect.left > 0 and pressed_keys[pygame.K_LEFT]:  
             self.rect.move_ip(-5, 0)
-        if self.rect.right < SCREEN_WIDTH and pressed_keys[K_RIGHT]:  
+        if self.rect.right < SCREEN_WIDTH and pressed_keys[pygame.K_RIGHT]:  
             self.rect.move_ip(5, 0)
 
 
@@ -73,11 +60,12 @@ class Coin(pygame.sprite.Sprite):
         self.rect.x = random.randint(500, 550)
         self.rect.center = (random.randint(40, SCREEN_WIDTH - 40), random.randint(500, 550))  
 
-
+# Создаем объекты классов
 P1 = Player()
 E1 = Enemy()
 C1 = Coin()
 
+# Создаем группы спрайтов
 enemies = pygame.sprite.Group()
 enemies.add(E1)
 coins = pygame.sprite.Group()
@@ -96,46 +84,46 @@ while True:
     for event in pygame.event.get():
         if event.type == INC_SPEED:
             SPEED += 0.5  
-        if event.type == QUIT:
+        if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
-    DISPLAYSURF.blit(background, (0, 0)) 
+    screen.blit(background, (0, 0)) 
     
-    
-    scores = font_small.render(f"Score: {SCORE}", True, BLACK)
-    coins_display = font_small.render(f"Coins: {COINS_COLLECTED}", True, BLACK)
-    DISPLAYSURF.blit(scores, (10, 10))  
-    DISPLAYSURF.blit(coins_display, (SCREEN_WIDTH - 100, 10))  
+    # Отображаем счетчики
+    scores = font_small.render(f"Score: {SCORE}", True, (0, 0, 0))
+    coins_display = font_small.render(f"Coins: {COINS_COLLECTED}", True, (0, 0, 0))
+    screen.blit(scores, (10, 10))  
+    screen.blit(coins_display, (SCREEN_WIDTH - 100, 10))  
 
     P1.move()  
     E1.move()  
 
+    # Отрисовываем все объекты
+    for i in all_sprites:
+        screen.blit(i.image, i.rect)
     
-    for entity in all_sprites:
-        DISPLAYSURF.blit(entity.image, entity.rect)
-    
-    
+    # Проверяем столкновение игрока с врагом и монетой
     if pygame.sprite.spritecollideany(P1, enemies):
         pygame.mixer.Sound('lab8/crash.wav').play()
         time.sleep(0.5)
-        DISPLAYSURF.fill(RED)  
-        DISPLAYSURF.blit(game_over, (30, 250))  
+        screen.fill((255, 0, 0))  
+        screen.blit(game_over, (30, 250))  
         pygame.display.update()
         for entity in all_sprites:
-            entity.kill()  
+            entity.kill()  # Удаляем все объекты
         time.sleep(2)
         pygame.quit()
         sys.exit()
     
     
     if pygame.sprite.spritecollideany(P1, coins):
-        COINS_COLLECTED += 1  
+        COINS_COLLECTED += 1  # Увеличиваем счетчик монет
         for coin in coins:
-            coin.kill()  
-        C1 = Coin()  
+            coin.kill()  # Удаляем текущую монету
+        C1 = Coin()  # Создаем новую монету
         coins.add(C1)
         all_sprites.add(C1)
 
     pygame.display.update()
-    FramePerSec.tick(FPS)  
+    FPS.tick(60)  

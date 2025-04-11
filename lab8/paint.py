@@ -1,106 +1,96 @@
 import pygame
 
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((640, 480))
-    clock = pygame.time.Clock()
+pygame.init()
+    
+#дефолт настройка
+screen = pygame.display.set_mode((640, 480))
+clock = pygame.time.Clock()
+screen.fill((255, 255, 255))
+radius = 15
+mode = 'blue'
+drawing_mode = 'free_draw'
+start_pos = None
+points = []
 
-    radius = 15
-    mode = 'blue'
-    points = []
-    drawing_mode = 'free_draw'
-    start_pos = None
+def get_color(mode):
+    colors = {
+        'blue': (0, 0, 255),
+        'red': (255, 0, 0),
+        'green': (0, 255, 0)
+    }
+    return colors.get(mode, (255, 255, 255)) #Мы достаём из словаря colors значение по ключу mode
 
-    while True:
-        pressed = pygame.key.get_pressed()
-        alt_held = pressed[pygame.K_LALT] or pressed[pygame.K_RALT]
-        ctrl_held = pressed[pygame.K_LCTRL] or pressed[pygame.K_RCTRL]
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w and ctrl_held:
-                    return
-                if event.key == pygame.K_F4 and alt_held:
-                    return
-                if event.key == pygame.K_ESCAPE:
-                    screen.fill((0, 0, 0))  # Clear screen with black
-
-                if event.key == pygame.K_r:
-                    mode = 'red'
-                elif event.key == pygame.K_g:
-                    mode = 'green'
-                elif event.key == pygame.K_b:
-                    mode = 'blue'
-
-                if event.key == pygame.K_f:
-                    drawing_mode = 'free_draw'
-                elif event.key == pygame.K_e:
-                    drawing_mode = 'eraser'
-                elif event.key == pygame.K_c:
-                    drawing_mode = 'circle'
-                elif event.key == pygame.K_v:
-                    drawing_mode = 'rectangle'
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    start_pos = event.pos
-                elif event.button == 3:
-                    radius = max(1, radius - 1)
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:
-                    if drawing_mode == 'circle':
-                        pygame.draw.circle(screen, get_color(mode), start_pos, radius)
-                    elif drawing_mode == 'rectangle' and start_pos:
-                        end_pos = event.pos
-                        pygame.draw.rect(screen, get_color(mode), (*start_pos, end_pos[0] - start_pos[0], end_pos[1] - start_pos[1]), 2)
-                    start_pos = None
-
-            if event.type == pygame.MOUSEMOTION:
-                position = event.pos
-                if drawing_mode == 'free_draw' and start_pos:
-                    points.append(position)
-                    points = points[-256:]
-                elif drawing_mode == 'eraser':
-                    pygame.draw.circle(screen, (0, 0, 0), position, radius)
-
-        if drawing_mode == 'free_draw':
-            for i in range(len(points) - 1):
-                draw_line_between(screen, i, points[i], points[i + 1], radius, mode)
-
-        pygame.display.flip()
-        clock.tick(60)
-
-def draw_line_between(screen, index, start, end, width, color_mode):
-    color = get_color(color_mode)
-    dx = start[0] - end[0]
+def draw_line_between(screen, start, end, width, color):
+    dx = start[0] - end[0] # конечная и начальная точка где мышь была отпущена
     dy = start[1] - end[1]
-    iterations = max(abs(dx), abs(dy))
+    distance = max(abs(dx), abs(dy))
+    for i in range(distance): #по немногу добавляем кружки
+        x = int(start[0] + float(i) / distance * (end[0] - start[0]))
+        y = int(start[1] + float(i) / distance * (end[1] - start[1])) #берём начальную точку и добавляем к ней чуть-чуть пути в сторону конца.
+        pygame.draw.circle(screen, color, (x, y), width) 
 
-    for i in range(iterations):
-        progress = i / iterations
-        x = int((1 - progress) * start[0] + progress * end[0])
-        y = int((1 - progress) * start[1] + progress * end[1])
-        pygame.draw.circle(screen, color, (x, y), width)
+running = True
+while running:
 
-def get_color(color_mode):
-    colors = {'blue': (0, 0, 255), 'red': (255, 0, 0), 'green': (0, 255, 0)}
-    return colors.get(color_mode, (255, 255, 255))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-main()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                screen.fill((255, 255, 255))
+                points = []
 
-"""
-Линия (по умолчанию)
+                
+            elif event.key == pygame.K_r:
+                mode = 'red'
+            elif event.key == pygame.K_g:
+                mode = 'green'
+            elif event.key == pygame.K_b:
+                mode = 'blue'
 
-Прямоугольник – V
+                
+            elif event.key == pygame.K_f:
+                drawing_mode = 'free_draw'
+            elif event.key == pygame.K_e:
+                drawing_mode = 'eraser'
+            elif event.key == pygame.K_c:
+                drawing_mode = 'circle'
+            elif event.key == pygame.K_v:
+                drawing_mode = 'rectangle'
 
-Круг – C
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                start_pos = event.pos
+                if drawing_mode == 'free_draw':
+                    points.append(start_pos) #при каждом движении мыши мы будем добавлять следующие точки и рисовать отрезки между ними
+                    
 
-Ластик – E
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1 and start_pos:
+                end_pos = event.pos #сохраняем позицию курсора мыши в момент нажатия
+                if drawing_mode == 'circle':
+                    dx = end_pos[0] - start_pos[0] 
+                    dy = end_pos[1] - start_pos[1]
+                    
+                    radius_draw = int((dx ** 2 + dy ** 2) ** 0.5)
+                    pygame.draw.circle(screen, get_color(mode), start_pos, radius_draw, 2)
+                elif drawing_mode == 'rectangle':
+                    rect = pygame.Rect(start_pos, (end_pos[0] - start_pos[0], end_pos[1] - start_pos[1]))
+                    pygame.draw.rect(screen, get_color(mode), rect, 2)
+                start_pos = None
 
-Цвета: R – красный, G – зелёный, B – синий
+        elif event.type == pygame.MOUSEMOTION:
+            pos = event.pos #позиция курсора
+            if drawing_mode == 'free_draw' and pygame.mouse.get_pressed()[0]:
+                points.append(pos) #соединить точки
+                if len(points) > 1:
+                    draw_line_between(screen, points[-2], points[-1], radius, get_color(mode)) #между точками рисуем плавную линию
+                        
+            elif drawing_mode == 'eraser' and pygame.mouse.get_pressed()[0]:
+                pygame.draw.circle(screen, (255, 255, 255), pos, radius)
 
-Очистить экран – Esc"""
-main()
+    pygame.display.flip()
+    clock.tick(60)
+
+

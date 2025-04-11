@@ -1,203 +1,142 @@
-import pygame  # Импортируем библиотеку pygame, которая используется для создания графических интерфейсов и игр.
+import pygame
+import math
 
-def main():
-    pygame.init()  # Инициализируем все модули pygame.
-    screen = pygame.display.set_mode((640, 480))  # Создаем экран с разрешением 640x480 пикселей.
-    clock = pygame.time.Clock()  # Создаем объект для контроля частоты обновления экрана.
 
-    radius = 15  # Радиус кисти и ластика.
-    mode = 'blue'  # Начальный цвет рисования — синий.
-    tool = 'brush'  # Выбран инструмент кисти (brush).
-    points = []  # Список для хранения всех точек, нарисованных с помощью кисти.
-    shapes = []  # Список для хранения всех нарисованных фигур.
-    drawing = False  # Флаг, указывающий, рисуем ли мы в данный момент.
-    start_pos = None  # Начальная позиция для рисования фигур (например, прямоугольников).
+pygame.init()
+screen = pygame.display.set_mode((640, 480))
+clock = pygame.time.Clock()
 
-    while True:
-        pressed = pygame.key.get_pressed()  # Получаем текущие нажатия клавиш.
-        alt_held = pressed[pygame.K_LALT] or pressed[pygame.K_RALT]  # Проверяем, нажата ли клавиша ALT.
-        ctrl_held = pressed[pygame.K_LCTRL] or pressed[pygame.K_RCTRL]  # Проверяем, нажата ли клавиша CTRL.
+#дефолт настройки
+radius = 5
+mode = 'blue'
+screen.fill((255, 255, 255))
+drawing_mode = 'free_draw'
+start_pos = None
+points = []
+
+def get_color(mode):
+    colors = {
+        'blue': (0, 0, 255),
+        'red': (255, 0, 0),
+        'green': (0, 255, 0)
+    }
+    return colors.get(mode, (255, 255, 255))
+
+    
+def draw_line_between(screen, start, end, width, color):
+    dx = start[0] - end[0]
+    dy = start[1] - end[1]
+    distance = max(abs(dx), abs(dy))
+    for i in range(distance):
+        x = int(start[0] + float(i) / distance * (end[0] - start[0]))
+        y = int(start[1] + float(i) / distance * (end[1] - start[1]))
+        pygame.draw.circle(screen, color, (x, y), width)
+
+running = True
+while running:
         
-        for event in pygame.event.get():  # Обрабатываем все события.
-            if event.type == pygame.QUIT:  # Если событие — выход из программы.
-                return
-            if event.type == pygame.KEYDOWN:  # Если нажата клавиша.
-                # Закрытие программы с использованием комбинаций клавиш.
-                if event.key == pygame.K_w and ctrl_held:
-                    return
-                if event.key == pygame.K_F4 and alt_held:
-                    return
-                if event.key == pygame.K_ESCAPE:
-                    return
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                screen.fill((255, 255, 255))
+                points = []
+
+
+            elif event.key == pygame.K_r:
+                mode = 'red'
+            elif event.key == pygame.K_g:
+                mode = 'green'
+            elif event.key == pygame.K_b:
+                mode = 'blue'
+
                 
-                # Выбор цвета инструмента.
-                if event.key == pygame.K_r:
-                    mode = 'red'  # Выбираем красный цвет.
-                elif event.key == pygame.K_g:
-                    mode = 'green'  # Выбираем зеленый цвет.
-                elif event.key == pygame.K_b:
-                    mode = 'blue'  # Выбираем синий цвет.
+            elif event.key == pygame.K_f:
+                drawing_mode = 'free_draw'
+            elif event.key == pygame.K_e:
+                drawing_mode = 'eraser'
+            elif event.key == pygame.K_c:
+                drawing_mode = 'circle'
+            elif event.key == pygame.K_v:
+                drawing_mode = 'rectangle'
+            elif event.key == pygame.K_q:
+                drawing_mode = 'square'
+            elif event.key == pygame.K_t:
+                drawing_mode = 'right_triangle'
+            elif event.key == pygame.K_y:
+                drawing_mode = 'equilateral_triangle'
+            elif event.key == pygame.K_u:
+                drawing_mode = 'rhombus'
 
-                # Выбор инструмента.
-                if event.key == pygame.K_t:  # Прямоугольник.
-                    tool = 'rectangle'
-                elif event.key == pygame.K_c:  # Круг.
-                    tool = 'circle'
-                elif event.key == pygame.K_e:  # Ластик.
-                    tool = 'eraser'
-                elif event.key == pygame.K_p:  # Кисть.
-                    tool = 'brush'
-                elif event.key == pygame.K_s:  # Квадрат.
-                    tool = 'square'
-                elif event.key == pygame.K_y:  # Прямоугольный треугольник.
-                    tool = 'right_triangle'
-                elif event.key == pygame.K_u:  # Равносторонний треугольник.
-                    tool = 'equilateral_triangle'
-                elif event.key == pygame.K_h:  # Ромб.
-                    tool = 'rhombus'
-                
-                # Начать рисование при нажатии пробела.
-                if event.key == pygame.K_SPACE:
-                    drawing = True
-                    start_pos = pygame.mouse.get_pos()  # Запоминаем начальную позицию мыши для рисования.
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                start_pos = event.pos
+                if drawing_mode == 'free_draw':
+                    points.append(start_pos)
 
-            if event.type == pygame.KEYUP:  # Когда клавиша отпускается.
-                if event.key == pygame.K_SPACE:  # Если отпускаем пробел.
-                    drawing = False  # Прекращаем рисование.
-                    # Если рисуем фигуру (не кисть или ластик), добавляем фигуру в список.
-                    if tool in ('rectangle', 'circle', 'square', 'right_triangle', 'equilateral_triangle', 'rhombus') and start_pos:
-                        end_pos = pygame.mouse.get_pos()  # Получаем конечную позицию мыши.
-                        shapes.append((tool, start_pos, end_pos, mode))  # Добавляем фигуру в список.
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1 and start_pos:
+                end_pos = event.pos #сохраняем позицию курсора мыши в момент нажатия
+                if drawing_mode == 'rectangle':
+                    rect = pygame.Rect(start_pos, (end_pos[0]-start_pos[0], end_pos[1]-start_pos[1]))
+                    pygame.draw.rect(screen, get_color(mode), rect, 2)
 
-            if event.type == pygame.MOUSEMOTION:  # Обработка движения мыши.
-                position = event.pos  # Текущая позиция мыши.
-                if drawing and tool == 'brush':  # Если рисуем кистью, добавляем точки в список.
-                    points.append(position)
-                    points = points[-256:]  # Ограничиваем список 256 точками (для производительности).
+                elif drawing_mode == 'square':
+                    dx = end_pos[0] - start_pos[0]
+                    dy = end_pos[1] - start_pos[1]
+                    side = min(abs(dx), abs(dy)) #берём меньшее значение из dx и dy, чтобы квадрат точно влезал в рамки движения мыши
+                    sign_x = 1 if dx >= 0 else -1 #cмотрим, в какую сторону двигали мышь по X чтобы правильно нарисовать квадрат даже если тянули в обратную сторону
+                    sign_y = 1 if dy >= 0 else -1
+                    square = pygame.Rect(start_pos[0], start_pos[1], sign_x * side, sign_y * side)
+                    pygame.draw.rect(screen, get_color(mode), square, 2)
 
-                if drawing and tool == 'eraser':  # Если рисуем ластиком, стираем точки и фигуры.
-                    erase(points, position, radius)  # Удаляем точки, попадающие в радиус ластика.
-                    erase_shapes(shapes, position, radius)  # Удаляем фигуры, попадающие в радиус ластика.
+                elif drawing_mode == 'circle':
+                    dx = end_pos[0] - start_pos[0]
+                    dy = end_pos[1] - start_pos[1]
+                    radius_draw = int((dx**2 + dy**2) ** 0.5)
+                    pygame.draw.circle(screen, get_color(mode), start_pos, radius_draw, 2)
 
-        screen.fill((0, 0, 0))  # Заполняем экран черным цветом (фон).
+                elif drawing_mode == 'right_triangle':
+                    pygame.draw.polygon(screen, get_color(mode), [start_pos, (start_pos[0], end_pos[1]), end_pos], 2)
 
-        # Рисуем все фигуры.
-        for shape in shapes:
-            drawShape(screen, *shape)
+                elif drawing_mode == 'equilateral_triangle':
+                    dx = end_pos[0] - start_pos[0]
+                    dy = end_pos[1] - start_pos[1]
+                    side = math.hypot(dx, dy)
+                    angle = math.atan2(dy, dx)
+                    p1 = start_pos
+                    p2 = (int(p1[0] + side * math.cos(angle)), int(p1[1] + side * math.sin(angle)))
+                    angle2 = angle - math.radians(60)
+                    p3 = (int(p1[0] + side * math.cos(angle2)), int(p1[1] + side * math.sin(angle2)))
+                    pygame.draw.polygon(screen, get_color(mode), [p1, p2, p3], 2)
 
-        # Рисуем линии кистью.
-        for i in range(len(points) - 1):
-            drawLineBetween(screen, i, points[i], points[i + 1], radius, mode)
-        
-        pygame.display.flip()  # Обновляем экран.
-        clock.tick(60)  # Ограничиваем частоту обновлений экрана до 60 кадров в секунду.
+                elif drawing_mode == 'rhombus':
+                    mid_x = (start_pos[0] + end_pos[0]) // 2
+                    mid_y = (start_pos[1] + end_pos[1]) // 2
+                    dx = abs(end_pos[0] - start_pos[0]) // 2
+                    dy = abs(end_pos[1] - start_pos[1]) // 2
+                    rhombus = [
+                        (mid_x, start_pos[1]),
+                        (end_pos[0], mid_y),
+                        (mid_x, end_pos[1]),
+                        (start_pos[0], mid_y)
+                    ]
+                    pygame.draw.polygon(screen, get_color(mode), rhombus, 2)
 
-# Функция для рисования линии между двумя точками с плавной заливкой.
-def drawLineBetween(screen, index, start, end, width, color_mode):
-    c1 = max(0, min(255, 2 * index - 256))  # Модифицируем значения цветов для плавности.
-    c2 = max(0, min(255, 2 * index))
+                start_pos = None
 
-    # Выбираем цвет в зависимости от выбранного режима.
-    if color_mode == 'blue':
-        color = (c1, c1, c2)
-    elif color_mode == 'red':
-        color = (c2, c1, c1)
-    elif color_mode == 'green':
-        color = (c1, c2, c1)
+        elif event.type == pygame.MOUSEMOTION:
+            pos = event.pos
+            if drawing_mode == 'free_draw' and pygame.mouse.get_pressed()[0]:
+                points.append(pos)
+                if len(points) > 1:
+                    draw_line_between(screen, points[-2], points[-1], radius, get_color(mode))
+            elif drawing_mode == 'eraser' and pygame.mouse.get_pressed()[0]:
+                pygame.draw.circle(screen, (255, 255, 255), pos, radius)
 
-    dx, dy = start[0] - end[0], start[1] - end[1]  # Разница между начальной и конечной точками.
-    iterations = max(abs(dx), abs(dy))  # Определяем количество итераций для рисования линии.
+    pygame.display.flip()
+    clock.tick(60)
 
-    for i in range(iterations):
-        progress = i / iterations  # Рассчитываем прогресс линии.
-        aprogress = 1 - progress
-        # Рассчитываем координаты промежуточных точек линии.
-        x = int(aprogress * start[0] + progress * end[0])
-        y = int(aprogress * start[1] + progress * end[1])
-        pygame.draw.circle(screen, color, (x, y), width)  # Рисуем маленькие окружности для линии.
 
-# Функция для рисования различных фигур.
-def drawShape(screen, shape, start, end, color_mode):
-    colors = {'blue': (0, 0, 255), 'red': (255, 0, 0), 'green': (0, 255, 0)}  # Словарь для цветов.
-    color = colors.get(color_mode, (255, 255, 255))  # Получаем цвет по выбранному режиму, по умолчанию — белый.
-
-    if shape == 'rectangle':  # Если фигура прямоугольник.
-        x1, y1 = start
-        x2, y2 = end
-        rect = pygame.Rect(min(x1, x2), min(y1, y2), abs(x2 - x1), abs(y2 - y1))  # Определяем прямоугольник.
-        pygame.draw.rect(screen, color, rect, 2)  # Рисуем прямоугольник.
-
-    elif shape == 'circle':  # Если фигура круг.
-        center = start
-        radius = int(((end[0] - start[0])**2 + (end[1] - start[1])**2)**0.5)  # Вычисляем радиус.
-        pygame.draw.circle(screen, color, center, radius, 2)  # Рисуем круг.
-
-    elif shape == 'square':  # Если фигура квадрат.
-        x1, y1 = start
-        x2, y2 = end
-        side_length = min(abs(x2 - x1), abs(y2 - y1))  # Вычисляем сторону квадрата.
-        pygame.draw.rect(screen, color, pygame.Rect(x1, y1, side_length, side_length), 2)  # Рисуем квадрат.
-
-    elif shape == 'right_triangle':  # Если фигура прямоугольный треугольник.
-        x1, y1 = start
-        x2, y2 = end
-        pygame.draw.polygon(screen, color, [(x1, y1), (x1, y2), (x2, y2)], 2)  # Рисуем прямоугольный треугольник.
-
-    elif shape == 'equilateral_triangle':  # Если фигура равносторонний треугольник.
-        x1, y1 = start
-        x2, y2 = end
-        side_length = int(((x2 - x1)**2 + (y2 - y1)**2)**0.5)  # Вычисляем длину стороны.
-        height = int(side_length * (3**0.5) / 2)  # Вычисляем высоту.
-        pygame.draw.polygon(screen, color, [(x1, y1), (x1 + side_length, y1), (x1 + side_length / 2, y1 - height)], 2)
-
-    elif shape == 'rhombus':  # Если фигура ромб.
-        x1, y1 = start
-        x2, y2 = end
-        width = abs(x2 - x1)  # Ширина ромба.
-        height = abs(y2 - y1)  # Высота ромба.
-        pygame.draw.polygon(screen, color, [(x1, y1 + height / 2), (x1 + width / 2, y1), (x2, y1 + height / 2), (x1 + width / 2, y2)], 2)
-
-# Функция для удаления точек с помощью ластика.
-def erase(points, position, radius):
-    points[:] = [p for p in points if (p[0] - position[0])**2 + (p[1] - position[1])**2 > radius**2]
-
-# Функция для удаления фигур с помощью ластика.
-def erase_shapes(shapes, position, radius):
-    shapes[:] = [shape for shape in shapes if not is_inside_eraser(shape, position, radius)]
-
-# Функция, которая проверяет, попадает ли фигура в зону стирания.
-def is_inside_eraser(shape, position, radius):
-    _, start, end, _ = shape
-    x, y = position
-    if shape[0] == 'rectangle':
-        x1, y1 = start
-        x2, y2 = end
-        return x1 - radius < x < x2 + radius and y1 - radius < y < y2 + radius  # Проверка для прямоугольника.
-    elif shape[0] == 'circle':
-        cx, cy = start
-        r = int(((end[0] - cx) ** 2 + (end[1] - cy) ** 2) ** 0.5)  # Радиус для круга.
-        return (cx - x) ** 2 + (cy - y) ** 2 < (r + radius) ** 2  # Проверка для круга.
-    elif shape[0] == 'square':
-        x1, y1 = start
-        x2, y2 = end
-        side_length = min(abs(x2 - x1), abs(y2 - y1))  # Сторона квадрата.
-        return x1 - radius < x < x1 + side_length + radius and y1 - radius < y < y1 + side_length + radius  # Проверка для квадрата.
-    elif shape[0] == 'right_triangle':
-        x1, y1 = start
-        x2, y2 = end
-        return x1 - radius < x < x2 + radius and y1 - radius < y < y2 + radius  # Проверка для треугольника.
-    elif shape[0] == 'equilateral_triangle':
-        x1, y1 = start
-        x2, y2 = end
-        side_length = int(((x2 - x1)**2 + (y2 - y1)**2)**0.5)  # Длина стороны для треугольника.
-        height = int(side_length * (3**0.5) / 2)  # Высота для треугольника.
-        return x1 - radius < x < x1 + side_length + radius and y1 - radius < y < y1 + height + radius  # Проверка для треугольника.
-    elif shape[0] == 'rhombus':
-        x1, y1 = start
-        x2, y2 = end
-        width = abs(x2 - x1)  # Ширина ромба.
-        height = abs(y2 - y1)  # Высота ромба.
-        return x1 - radius < x < x2 + radius and y1 - radius < y < y2 + radius  # Проверка для ромба.
-    return False  # Возвращаем False, если фигура не попадает в радиус ластика.
-
-main()  # Запуск основной функции.
